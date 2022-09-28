@@ -32,18 +32,20 @@ export const WebFrame = async (
     ? context.get(WebFrameContext).stack
     : [];
 
-  const queryParams = context.has(QueryParamsContext)
-    ? context.get(QueryParamsContext)
-    : {};
-
   let content = props.children;
   let url = props.initialUrl ?? "";
 
-  if (`wf-${props.name}` in queryParams) {
-    const newUrl = queryParams[`wf-${props.name}`];
-    if (newUrl !== undefined) {
-      if (typeof newUrl === "string") url = newUrl;
-      else if (newUrl.length > 0) url = newUrl[0]!;
+  if (props.persistentState !== false) {
+    const queryParams = context.has(QueryParamsContext)
+      ? context.get(QueryParamsContext)
+      : {};
+
+    if (`wf-${props.name}` in queryParams) {
+      const newUrl = queryParams[`wf-${props.name}`];
+      if (newUrl !== undefined) {
+        if (typeof newUrl === "string") url = newUrl;
+        else if (newUrl.length > 0) url = newUrl[0]!;
+      }
     }
   }
 
