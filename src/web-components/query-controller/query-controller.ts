@@ -17,6 +17,12 @@ export class QueryController {
     return url.searchParams.get(this.generateKeyedNameFor(name));
   }
 
+  static remove(name: string) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete(this.generateKeyedNameFor(name));
+    window.history.replaceState({}, "", url.href);
+  }
+
   static getAllKeyed() {
     const url = new URL(window.location.href);
     const params = new Map<string, string>();

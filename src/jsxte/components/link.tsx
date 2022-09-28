@@ -10,28 +10,37 @@ export type LinkProps = {
 export const Link = (props: LinkProps, context: ContextMap): JSX.Element => {
   const { href, frameName, ...rest } = props;
 
-  if (frameName) {
-    const linkProps: FrameLinkAttributes = {
-      "data-frame": frameName,
-      "data-href": href,
-    };
+  const linkProps: Partial<FrameLinkAttributes> = {};
+  const params = new URLSearchParams();
 
-    return <a is="frame-link" {...linkProps} {...rest} />;
-  }
+  linkProps["data-href"] = href;
 
   if (context.has(WebFrameContext)) {
-    const ctxFrameName = context.get(WebFrameContext).frameName;
-    const linkProps: FrameLinkAttributes = {
-      "data-frame": ctxFrameName,
-      "data-href": href,
-    };
+    const frameStack = context.get(WebFrameContext).stack;
 
-    return <a is="frame-link" {...linkProps} {...rest} />;
+    for (const frame of frameStack) {
+      params.set(`wf-${frame.name}`, frame.initialUrl);
+    }
   }
 
-  const linkProps: FrameLinkAttributes = {
-    "data-href": href,
-  };
+  if (frameName) {
+    linkProps["data-frame"] = frameName;
+    params.delete(frameName);
+    params.set(`wf-${frameName}`, href);
+  } else if (context.has(WebFrameContext)) {
+    const ctxFrameName = context.get(WebFrameContext).frameName;
 
-  return <a is="frame-link" {...linkProps} {...rest} />;
+    linkProps["data-frame"] = ctxFrameName;
+    params.delete(`wf-${ctxFrameName}`);
+    params.set(`wf-${ctxFrameName}`, href);
+  }
+
+  return (
+    <a
+      is="frame-link"
+      href={"./?" + params.toString()}
+      {...linkProps}
+      {...rest}
+    />
+  );
 };

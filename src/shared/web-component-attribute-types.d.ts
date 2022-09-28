@@ -4,9 +4,10 @@ export type FrameLinkAttributes = {
 };
 
 export type WebFrameAttributes = {
-  "data-initial-url": string;
+  "data-initial-url"?: string;
   "data-name": string;
   "data-allow-external-domains"?: "true" | "false";
   "data-allowed-domains"?: string;
   "data-persistent-state"?: "true" | "false";
+  "data-is-preloaded"?: "true" | "false";
 };

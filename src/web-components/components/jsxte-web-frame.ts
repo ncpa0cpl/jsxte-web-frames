@@ -18,11 +18,12 @@ class JsxteWebFrame extends HTMLDivElement {
     const persistedUrl = QueryController.get(this.frameName);
     const initialUrl = this.initialUrl;
 
-    if (this.persistentState && persistedUrl !== null) {
-      this.loadFrame(persistedUrl);
-    } else if (initialUrl) {
-      this.loadFrame(initialUrl);
-    }
+    if (!this.isPreloaded)
+      if (this.persistentState && persistedUrl !== null) {
+        this.loadFrame(persistedUrl);
+      } else if (initialUrl) {
+        this.loadFrame(initialUrl);
+      }
   }
 
   private setContent(html: string) {
@@ -123,6 +124,11 @@ class JsxteWebFrame extends HTMLDivElement {
     return attribute !== undefined ? Boolean(attribute) : undefined;
   }
 
+  get isPreloaded(): boolean | undefined {
+    const attribute = this.retrieveCustomAttribute("data-is-preloaded");
+    return attribute !== undefined ? Boolean(attribute) : undefined;
+  }
+
   connectedCallback() {
     if (this.frameName) {
       const removeNavListener = NavigationEventEmitter.on(
@@ -153,6 +159,12 @@ class JsxteWebFrame extends HTMLDivElement {
   }
 
   disconnectedCallback() {
+    const frameName = this.frameName;
+
+    if (frameName) {
+      QueryController.remove(frameName);
+    }
+
     if (this.onFrameUnmount) {
       this.onFrameUnmount();
     }
