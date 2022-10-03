@@ -146,18 +146,24 @@ customElements.define("frame-link", FrameLink, { extends: "a" });
 // src/web-components/components/jsxte-web-frame.ts
 var JsxteWebFrame = class extends HTMLDivElement {
   constructor() {
+    var _a;
     super();
     this.onFrameUnmount = void 0;
     this.history = [];
-    this.onLoadTemplate = this.querySelector(
-      ":scope > template.on-load-template"
-    );
+    this.loaderContainer = document.createElement("div");
+    this.loaderContainer.style.display = "none";
     this.onErrorTemplate = this.querySelector(
       ":scope > template.on-error-template"
     );
     this.contentContainer = this.querySelector(
       ":scope > div.web-frame-content"
     );
+    const loadNode = (_a = this.querySelector(
+      ":scope > template.on-load-template"
+    )) == null ? void 0 : _a.content.cloneNode(true);
+    if (loadNode)
+      this.loaderContainer.prepend(loadNode);
+    this.onLoadNode = this.loaderContainer.children[0];
     if (!this.frameName) {
       this.warnMissingName();
       return;
@@ -225,11 +231,11 @@ var JsxteWebFrame = class extends HTMLDivElement {
     const attribute = this.retrieveCustomAttribute("data-is-preloaded");
     return attribute !== void 0 ? Boolean(attribute) : void 0;
   }
-  getOnLoadTemplate() {
-    if (!this.onLoadTemplate) {
+  getOnLoadNode() {
+    if (!this.onLoadNode) {
       throw new Error("JsxteWebFrame: .on-load-template element is missing.");
     }
-    return this.onLoadTemplate;
+    return this.onLoadNode;
   }
   getOnErrorTemplate() {
     if (!this.onErrorTemplate) {
@@ -243,7 +249,12 @@ var JsxteWebFrame = class extends HTMLDivElement {
     }
     return this.contentContainer;
   }
+  hideLoader() {
+    const loader = this.getOnLoadNode();
+    this.loaderContainer.prepend(loader);
+  }
   setContent(html) {
+    this.hideLoader();
     const container = this.getContentContainer();
     container.innerHTML = html;
     const frameName = this.frameName;
@@ -258,7 +269,9 @@ var JsxteWebFrame = class extends HTMLDivElement {
     }
   }
   renderLoader() {
-    this.setContent(this.getOnLoadTemplate().innerHTML);
+    const container = this.getContentContainer();
+    container.innerHTML = "";
+    container.append(this.getOnLoadNode());
   }
   renderError() {
     this.setContent(this.getOnErrorTemplate().innerHTML);
@@ -310,6 +323,7 @@ var JsxteWebFrame = class extends HTMLDivElement {
   }
   connectedCallback() {
     this.style.display = "contents";
+    this.prepend(this.loaderContainer);
     if (this.frameName) {
       const removeNavListener = NavigationEventEmitter.on(
         "navigate",
