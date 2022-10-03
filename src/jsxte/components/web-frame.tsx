@@ -22,6 +22,10 @@ export type WebFrameProps = JSXTE.PropsWithChildren<{
   children?: JSXTE.ElementChildren;
   containerProps?: JSX.IntrinsicElements["div"];
   dontPreload?: boolean;
+  onLoad?: () => JSX.Element;
+  onError?: (
+    reloadButton: JSXTE.Component<JSX.IntrinsicElements["button"]>
+  ) => JSX.Element;
 }>;
 
 export const WebFrame = async (
@@ -50,7 +54,7 @@ export const WebFrame = async (
   }
 
   if (!props.dontPreload && !!url) {
-    const c = await resolveFrameView(url);
+    const c = resolveFrameView(url);
     if (c) content = c;
   }
 
@@ -78,9 +82,27 @@ export const WebFrame = async (
 
   const { is, children, ...forwardedProps } = props.containerProps ?? {};
 
+  const renderReloadButton = (props: JSX.IntrinsicElements["button"]) => {
+    return <button data-frame-reload {...props} />;
+  };
+
   return (
     <div {...forwardedProps} is="jsxte-web-frame" {...frameProps}>
-      {content}
+      <template class="on-load-template">
+        <div class="web-frame-loader">
+          {props.onLoad ? props.onLoad() : <h3>Loading...</h3>}
+        </div>
+      </template>
+      <template class="on-error-template">
+        <div class="web-frame-error">
+          {props.onError ? (
+            props.onError(renderReloadButton)
+          ) : (
+            <h3>Something went wrong.</h3>
+          )}
+        </div>
+      </template>
+      <div class="web-frame-content">{content}</div>
     </div>
   );
 };

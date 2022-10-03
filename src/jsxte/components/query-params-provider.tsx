@@ -7,7 +7,9 @@ export const QueryParamsProvider = (
   }>,
   context: ContextMap
 ) => {
-  context.set(QueryParamsContext, props.params);
+  if (context.has(QueryParamsContext))
+    context.update(QueryParamsContext, props.params);
+  else context.set(QueryParamsContext, props.params);
 
   return <>{props.children}</>;
 };

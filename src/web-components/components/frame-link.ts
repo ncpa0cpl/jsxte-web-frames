@@ -5,8 +5,19 @@ import { QueryController } from "../query-controller/query-controller";
 export class FrameLink extends HTMLAnchorElement {
   private onLinkUnmount: (() => void) | undefined = undefined;
 
-  constructor() {
-    super();
+  // #region Utility Methods
+
+  private retrieveCustomAttribute<T extends keyof FrameLinkAttributes>(
+    name: T
+  ): FrameLinkAttributes[T] | undefined {
+    return this.getAttribute(name) as FrameLinkAttributes[T];
+  }
+
+  private setCustomAttribute<T extends keyof FrameLinkAttributes>(
+    name: T,
+    value: Exclude<FrameLinkAttributes[T], undefined>
+  ): void {
+    this.setAttribute(name, value);
   }
 
   private updateOwnHref() {
@@ -31,6 +42,21 @@ export class FrameLink extends HTMLAnchorElement {
     }
   }
 
+  // #endregion
+
+  // #region Custom Attribute Getters
+
+  get frameName() {
+    return this.retrieveCustomAttribute("data-frame");
+  }
+
+  get frameHref() {
+    return this.retrieveCustomAttribute("data-href");
+  }
+  // #endregion
+
+  // #region Click Handler
+
   private handleClick = (event: MouseEvent) => {
     const frameName = this.frameName;
     const url = this.frameHref;
@@ -41,18 +67,9 @@ export class FrameLink extends HTMLAnchorElement {
     }
   };
 
-  private retrieveCustomAttribute<T extends keyof FrameLinkAttributes>(
-    name: T
-  ): FrameLinkAttributes[T] | undefined {
-    return this.getAttribute(name) as FrameLinkAttributes[T];
-  }
+  // #endregion
 
-  private setCustomAttribute<T extends keyof FrameLinkAttributes>(
-    name: T,
-    value: Exclude<FrameLinkAttributes[T], undefined>
-  ): void {
-    this.setAttribute(name, value);
-  }
+  // #region Public Methods
 
   proposeOwner(frame: string) {
     if (!this.frameName) {
@@ -61,15 +78,11 @@ export class FrameLink extends HTMLAnchorElement {
     }
   }
 
-  get frameName() {
-    return this.retrieveCustomAttribute("data-frame");
-  }
+  // #endregion
 
-  get frameHref() {
-    return this.retrieveCustomAttribute("data-href");
-  }
+  // #region Lifecycle Methods
 
-  connectedCallback() {
+  protected connectedCallback() {
     this.updateOwnHref();
 
     const removeOnNavigationListener = NavigationEventEmitter.on(
@@ -86,9 +99,11 @@ export class FrameLink extends HTMLAnchorElement {
     };
   }
 
-  disconnectedCallback() {
+  protected disconnectedCallback() {
     if (this.onLinkUnmount) this.onLinkUnmount();
   }
+
+  // #endregion
 }
 
 customElements.define("frame-link", FrameLink, { extends: "a" });

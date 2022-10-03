@@ -6,9 +6,16 @@ import type { FrameLink } from "./frame-link";
 class JsxteWebFrame extends HTMLDivElement {
   private onFrameUnmount: (() => void) | undefined = undefined;
   private history: string[] = []; // TODO: make history persistent
+  private onLoadTemplate: HTMLTemplateElement | null;
+  private onErrorTemplate: HTMLTemplateElement | null;
+  private contentContainer: HTMLDivElement | null;
 
   constructor() {
     super();
+
+    this.onLoadTemplate = this.querySelector("> template.on-load-template");
+    this.onErrorTemplate = this.querySelector("> template.on-error-template");
+    this.contentContainer = this.querySelector("> div.web-frame-content");
 
     if (!this.frameName) {
       this.warnMissingName();
@@ -20,43 +27,13 @@ class JsxteWebFrame extends HTMLDivElement {
 
     if (!this.isPreloaded)
       if (this.persistentState && persistedUrl !== null) {
-        this.loadFrame(persistedUrl);
+        this.load(persistedUrl);
       } else if (initialUrl) {
-        this.loadFrame(initialUrl);
+        this.load(initialUrl);
       }
   }
 
-  private setContent(html: string) {
-    this.innerHTML = html;
-    const frameName = this.frameName;
-
-    if (frameName) {
-      const frameLinks = this.querySelectorAll(
-        'a[is="frame-link"]'
-      ) as NodeListOf<FrameLink | HTMLAnchorElement>;
-
-      for (const anchor of frameLinks) {
-        if ("proposeOwner" in anchor) anchor.proposeOwner(frameName);
-      }
-    }
-  }
-
-  private async loadFrame(url: string) {
-    this.validateUrl(url);
-
-    const frameName = this.frameName;
-
-    if (this.persistentState && frameName) {
-      QueryController.set(frameName, url);
-    }
-
-    this.history.push(url);
-
-    const response = await fetch(url, { method: "GET" });
-
-    if (response.ok) this.setContent(await response.text());
-    else this.setContent(this.getFailureComponent());
-  }
+  // #region Utility Methods
 
   private warnMissingName() {
     console.warn(
@@ -89,16 +66,15 @@ class JsxteWebFrame extends HTMLDivElement {
     }
   }
 
-  private getFailureComponent() {
-    // eslint-disable-next-line quotes
-    return /* html */ `<h2 style="color: red;">Something went wrong.</h2>`;
-  }
-
   private retrieveCustomAttribute<T extends keyof WebFrameAttributes>(
     name: T
   ): WebFrameAttributes[T] | undefined {
     return this.getAttribute(name) as WebFrameAttributes[T];
   }
+
+  // #endregion
+
+  // #region Custom Attribute Getters
 
   get initialUrl(): string | undefined {
     return this.retrieveCustomAttribute("data-initial-url");
@@ -129,13 +105,125 @@ class JsxteWebFrame extends HTMLDivElement {
     return attribute !== undefined ? Boolean(attribute) : undefined;
   }
 
-  connectedCallback() {
+  // #endregion
+
+  // #region HTML Element Getters
+
+  private getOnLoadTemplate(): HTMLTemplateElement {
+    if (!this.onLoadTemplate) {
+      throw new Error("JsxteWebFrame: .on-load-template element is missing.");
+    }
+    return this.onLoadTemplate;
+  }
+
+  private getOnErrorTemplate(): HTMLTemplateElement {
+    if (!this.onErrorTemplate) {
+      throw new Error("JsxteWebFrame: .on-error-template element is missing.");
+    }
+    return this.onErrorTemplate;
+  }
+
+  private getContentContainer(): HTMLDivElement {
+    if (!this.contentContainer) {
+      throw new Error("JsxteWebFrame: .web-frame-content element is missing.");
+    }
+    return this.contentContainer;
+  }
+
+  // #endregion
+
+  // #region Rendering Methods
+
+  private setContent(html: string) {
+    const container = this.getContentContainer();
+
+    container.innerHTML = html;
+    const frameName = this.frameName;
+
+    if (frameName) {
+      const frameLinks = this.querySelectorAll(
+        'a[is="frame-link"]'
+      ) as NodeListOf<FrameLink | HTMLAnchorElement>;
+
+      for (const anchor of frameLinks) {
+        if ("proposeOwner" in anchor) anchor.proposeOwner(frameName);
+      }
+    }
+  }
+
+  private renderLoader() {
+    this.setContent(this.getOnLoadTemplate().innerHTML);
+  }
+
+  private renderError() {
+    this.setContent(this.getOnErrorTemplate().innerHTML);
+
+    const reloadButtons = this.querySelectorAll(
+      "div.web-frame-error button[data-frame-reload]"
+    );
+
+    for (const button of reloadButtons) {
+      button.addEventListener("click", () => this.reload());
+    }
+  }
+
+  // #endregion
+
+  // #region Load/Reload Methods
+
+  private async reload() {
+    const lastUrl = this.history[this.history.length - 1];
+
+    if (lastUrl) {
+      this.renderLoader();
+      try {
+        const response = await fetch(lastUrl, { method: "GET" });
+        const responseData = await response.text();
+
+        if (response.ok) this.setContent(responseData);
+        else this.renderError();
+      } catch (e) {
+        this.renderError();
+      }
+    }
+  }
+
+  private async load(url: string) {
+    this.validateUrl(url);
+
+    const frameName = this.frameName;
+
+    if (this.persistentState && frameName) {
+      QueryController.set(frameName, url);
+    }
+
+    this.history.push(url);
+
+    this.renderLoader();
+    try {
+      const response = await fetch(url, { method: "GET" });
+      const responseData = await response.text();
+
+      if (response.ok) this.setContent(responseData);
+      else this.renderError();
+    } catch (e) {
+      this.renderError();
+    }
+  }
+
+  // #endregion
+
+  // #region Lifecycle Methods
+
+  protected connectedCallback() {
+    this.style.display = "contents";
+
     if (this.frameName) {
       const removeNavListener = NavigationEventEmitter.on(
         "navigate",
         (event) => {
           if (event.frame === this.frameName) {
-            this.loadFrame(event.url);
+            this.load(event.url);
           }
         }
       );
@@ -146,7 +234,7 @@ class JsxteWebFrame extends HTMLDivElement {
           if (event.frame === this.frameName) {
             this.history.pop();
             const url = this.history[this.history.length - 1];
-            if (url) this.loadFrame(url);
+            if (url) this.load(url);
           }
         }
       );
@@ -158,7 +246,7 @@ class JsxteWebFrame extends HTMLDivElement {
     }
   }
 
-  disconnectedCallback() {
+  protected disconnectedCallback() {
     const frameName = this.frameName;
 
     if (frameName) {
@@ -169,6 +257,8 @@ class JsxteWebFrame extends HTMLDivElement {
       this.onFrameUnmount();
     }
   }
+
+  // #endregion
 }
 
 customElements.define("jsxte-web-frame", JsxteWebFrame, { extends: "div" });

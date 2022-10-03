@@ -1,12 +1,20 @@
+import type { Request, Response } from "express";
 import { type Express } from "express";
 import "jsxte";
 import { renderToHtmlAsync } from "jsxte";
 import { QueryParamsProvider } from "./components/query-params-provider";
+import { RequestResponseConsumer } from "./components/request-response-consumer";
+import { RequestResponseProvider } from "./components/request-response-provider";
 
 type ParsedUrl = {
   params: Record<string, string>;
   query: URLSearchParams;
 };
+
+type RouteFrameViewComponent = JSXTE.Component<{
+  req?: Request;
+  res?: Response;
+}>;
 
 class PatternParameter {
   constructor(public name: string, public pattern: string) {}
@@ -16,7 +24,7 @@ class Route {
   private pathPattern: string;
   private patternParts: Array<string | PatternParameter>;
 
-  constructor(pathPattern: string, public Component: JSXTE.Component) {
+  constructor(pathPattern: string, public Component: RouteFrameViewComponent) {
     this.pathPattern = pathPattern;
     this.patternParts = pathPattern
       .split("/")
@@ -69,13 +77,16 @@ class Route {
 class FrameViewRoutes {
   private static routes: Array<Route> = [];
 
-  static addRoute(pathPattern: string, Component: JSXTE.Component): void {
+  static addRoute(
+    pathPattern: string,
+    Component: RouteFrameViewComponent
+  ): void {
     this.routes.push(new Route(pathPattern, Component));
   }
 
   static resolveRoute(
     path: string
-  ): (ParsedUrl & { Component: JSXTE.Component }) | undefined {
+  ): (ParsedUrl & { Component: RouteFrameViewComponent }) | undefined {
     for (const route of this.routes) {
       if (route.matches(path)) {
         return { ...route.parseUrl(path), Component: route.Component };
@@ -87,26 +98,33 @@ class FrameViewRoutes {
 export const registerFrameView = <P extends string>(
   server: Express,
   path: P,
-  FrameView: JSXTE.Component
+  FrameView: RouteFrameViewComponent
 ) => {
   server.get(path, async (req, res) => {
-    const queryParams: Record<string, string[]> = {};
+    try {
+      const queryParams: Record<string, string[]> = {};
 
-    for (const [key, value] of Object.entries(req.query)) {
-      if (Array.isArray(value) && !value.some((v) => typeof v !== "string")) {
-        queryParams[key] = value as string[];
-      } else if (typeof value === "string") {
-        queryParams[key] = [value];
+      for (const [key, value] of Object.entries(req.query)) {
+        if (Array.isArray(value) && !value.some((v) => typeof v !== "string")) {
+          queryParams[key] = value as string[];
+        } else if (typeof value === "string") {
+          queryParams[key] = [value];
+        }
       }
-    }
 
-    res.send(
-      await renderToHtmlAsync(
-        <QueryParamsProvider params={queryParams}>
-          <FrameView />
-        </QueryParamsProvider>
-      )
-    );
+      res.send(
+        await renderToHtmlAsync(
+          <RequestResponseProvider req={req} res={res}>
+            <QueryParamsProvider params={queryParams}>
+              <FrameView req={req} res={res} />
+            </QueryParamsProvider>
+          </RequestResponseProvider>
+        )
+      );
+    } catch (e) {
+      console.error(e);
+      res.status(500).send("Internal server error.");
+    }
   });
 
   FrameViewRoutes.addRoute(path, FrameView);
@@ -117,11 +135,15 @@ export const resolveFrameView = (url: string) => {
 
   if (!resolvedRoute) return;
 
-  return renderToHtmlAsync(
+  return (
     <QueryParamsProvider
       params={Object.fromEntries(resolvedRoute.query.entries())}
     >
-      <resolvedRoute.Component />
+      <RequestResponseConsumer
+        render={({ req, res }) => (
+          <resolvedRoute.Component req={req} res={res} />
+        )}
+      />
     </QueryParamsProvider>
   );
 };
