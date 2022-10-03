@@ -30,7 +30,7 @@ class JsxteWebFrame extends HTMLDivElement {
       ) as HTMLTemplateElement
     )?.content.cloneNode(true);
 
-    if (this.onLoadNode) this.loaderContainer.prepend(loadNode);
+    if (loadNode) this.loaderContainer.prepend(loadNode);
 
     this.onLoadNode = this.loaderContainer.children[0];
 
