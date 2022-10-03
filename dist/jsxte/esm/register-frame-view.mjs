@@ -42,6 +42,8 @@ var __async = (__this, __arguments, generator) => {
 import "jsxte";
 import { renderToHtmlAsync } from "jsxte";
 import { QueryParamsProvider } from "./components/query-params-provider.mjs";
+import { RequestResponseConsumer } from "./components/request-response-consumer.mjs";
+import { RequestResponseProvider } from "./components/request-response-provider.mjs";
 import { jsx } from "jsxte/jsx-runtime";
 var PatternParameter = class {
   constructor(name, pattern) {
@@ -106,22 +108,34 @@ var FrameViewRoutes = class {
 FrameViewRoutes.routes = [];
 var registerFrameView = (server, path, FrameView) => {
   server.get(path, (req, res) => __async(void 0, null, function* () {
-    const queryParams = {};
-    for (const [key, value] of Object.entries(req.query)) {
-      if (Array.isArray(value) && !value.some((v) => typeof v !== "string")) {
-        queryParams[key] = value;
-      } else if (typeof value === "string") {
-        queryParams[key] = [value];
+    try {
+      const queryParams = {};
+      for (const [key, value] of Object.entries(req.query)) {
+        if (Array.isArray(value) && !value.some((v) => typeof v !== "string")) {
+          queryParams[key] = value;
+        } else if (typeof value === "string") {
+          queryParams[key] = [value];
+        }
       }
+      res.send(
+        yield renderToHtmlAsync(
+          /* @__PURE__ */ jsx(RequestResponseProvider, {
+            req,
+            res,
+            children: /* @__PURE__ */ jsx(QueryParamsProvider, {
+              params: queryParams,
+              children: /* @__PURE__ */ jsx(FrameView, {
+                req,
+                res
+              })
+            })
+          })
+        )
+      );
+    } catch (e) {
+      console.error(e);
+      res.status(500).send("Internal server error.");
     }
-    res.send(
-      yield renderToHtmlAsync(
-        /* @__PURE__ */ jsx(QueryParamsProvider, {
-          params: queryParams,
-          children: /* @__PURE__ */ jsx(FrameView, {})
-        })
-      )
-    );
   }));
   FrameViewRoutes.addRoute(path, FrameView);
 };
@@ -131,7 +145,12 @@ var resolveFrameView = (url) => {
     return;
   return /* @__PURE__ */ jsx(QueryParamsProvider, {
     params: Object.fromEntries(resolvedRoute.query.entries()),
-    children: /* @__PURE__ */ jsx(resolvedRoute.Component, {})
+    children: /* @__PURE__ */ jsx(RequestResponseConsumer, {
+      render: ({ req, res }) => /* @__PURE__ */ jsx(resolvedRoute.Component, {
+        req,
+        res
+      })
+    })
   });
 };
 export {

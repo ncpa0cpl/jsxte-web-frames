@@ -17,20 +17,25 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/jsxte/components/query-params-provider.tsx
-var query_params_provider_exports = {};
-__export(query_params_provider_exports, {
-  QueryParamsProvider: () => QueryParamsProvider
+// src/jsxte/components/request-response-consumer.tsx
+var request_response_consumer_exports = {};
+__export(request_response_consumer_exports, {
+  RequestResponseConsumer: () => RequestResponseConsumer
 });
-module.exports = __toCommonJS(query_params_provider_exports);
-var import_query_params_context = require("../contexts/query-params-context.js");
+module.exports = __toCommonJS(request_response_consumer_exports);
+var import_request_response_context = require("../contexts/request-response-context.cjs");
 var import_jsx_runtime = require("jsxte/jsx-runtime");
-var QueryParamsProvider = (props, context) => {
-  if (context.has(import_query_params_context.QueryParamsContext))
-    context.update(import_query_params_context.QueryParamsContext, props.params);
-  else
-    context.set(import_query_params_context.QueryParamsContext, props.params);
+var RequestResponseConsumer = (props, context) => {
+  let req = void 0, res = void 0;
+  if (context.has(import_request_response_context.RequestResponseContext)) {
+    const requestResponse = context.get(import_request_response_context.RequestResponseContext);
+    req = requestResponse.req;
+    res = requestResponse.res;
+  }
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, {
-    children: props.children
+    children: props.render({
+      req,
+      res
+    })
   });
 };
