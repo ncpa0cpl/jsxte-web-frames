@@ -26,7 +26,10 @@ module.exports = __toCommonJS(query_params_provider_exports);
 var import_query_params_context = require("../contexts/query-params-context.cjs");
 var import_jsx_runtime = require("jsxte/jsx-runtime");
 var QueryParamsProvider = (props, context) => {
-  context.set(import_query_params_context.QueryParamsContext, props.params);
+  if (context.has(import_query_params_context.QueryParamsContext))
+    context.update(import_query_params_context.QueryParamsContext, props.params);
+  else
+    context.set(import_query_params_context.QueryParamsContext, props.params);
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, {
     children: props.children
   });
