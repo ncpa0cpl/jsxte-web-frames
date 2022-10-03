@@ -1,3 +1,14 @@
 node_modules
 coverage
 yarn-error.log
+__mocks__
+__tests__
+.husky
+.vscode
+.eslintignore
+.eslintrc.json
+.npmignore
+.npmrc
+.prettierrc
+git-hook-tasks.config.json
+jest.config.js
