@@ -149,9 +149,15 @@ var JsxteWebFrame = class extends HTMLDivElement {
     super();
     this.onFrameUnmount = void 0;
     this.history = [];
-    this.onLoadTemplate = this.querySelector("> template.on-load-template");
-    this.onErrorTemplate = this.querySelector("> template.on-error-template");
-    this.contentContainer = this.querySelector("> div.web-frame-content");
+    this.onLoadTemplate = this.querySelector(
+      ":scope > template.on-load-template"
+    );
+    this.onErrorTemplate = this.querySelector(
+      ":scope > template.on-error-template"
+    );
+    this.contentContainer = this.querySelector(
+      ":scope > div.web-frame-content"
+    );
     if (!this.frameName) {
       this.warnMissingName();
       return;

@@ -19,4 +19,4 @@ export declare type WebFrameProps = JSXTE.PropsWithChildren<{
     onLoad?: () => JSX.Element;
     onError?: (reloadButton: JSXTE.Component<JSX.IntrinsicElements["button"]>) => JSX.Element;
 }>;
-export declare const WebFrame: (props: WebFrameProps, context: ContextMap) => Promise<JSX.Element>;
+export declare const WebFrame: (props: WebFrameProps, context: ContextMap) => JSX.Element;
