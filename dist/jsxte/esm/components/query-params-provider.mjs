@@ -2,7 +2,10 @@
 import { QueryParamsContext } from "../contexts/query-params-context.mjs";
 import { Fragment, jsx } from "jsxte/jsx-runtime";
 var QueryParamsProvider = (props, context) => {
-  context.set(QueryParamsContext, props.params);
+  if (context.has(QueryParamsContext))
+    context.update(QueryParamsContext, props.params);
+  else
+    context.set(QueryParamsContext, props.params);
   return /* @__PURE__ */ jsx(Fragment, {
     children: props.children
   });
