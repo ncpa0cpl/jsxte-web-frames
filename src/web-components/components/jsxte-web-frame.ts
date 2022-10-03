@@ -6,22 +6,33 @@ import type { FrameLink } from "./frame-link";
 class JsxteWebFrame extends HTMLDivElement {
   private onFrameUnmount: (() => void) | undefined = undefined;
   private history: string[] = []; // TODO: make history persistent
-  private onLoadTemplate: HTMLTemplateElement | null;
+  private onLoadNode: Node | undefined;
   private onErrorTemplate: HTMLTemplateElement | null;
   private contentContainer: HTMLDivElement | null;
+  private loaderContainer: HTMLElement;
 
   constructor() {
     super();
 
-    this.onLoadTemplate = this.querySelector(
-      ":scope > template.on-load-template"
-    );
+    this.loaderContainer = document.createElement("div");
+    this.loaderContainer.style.display = "none";
+
     this.onErrorTemplate = this.querySelector(
       ":scope > template.on-error-template"
     );
     this.contentContainer = this.querySelector(
       ":scope > div.web-frame-content"
     );
+
+    const loadNode = (
+      this.querySelector(
+        ":scope > template.on-load-template"
+      ) as HTMLTemplateElement
+    )?.content.cloneNode(true);
+
+    if (this.onLoadNode) this.loaderContainer.prepend(loadNode);
+
+    this.onLoadNode = this.loaderContainer.children[0];
 
     if (!this.frameName) {
       this.warnMissingName();
@@ -115,11 +126,11 @@ class JsxteWebFrame extends HTMLDivElement {
 
   // #region HTML Element Getters
 
-  private getOnLoadTemplate(): HTMLTemplateElement {
-    if (!this.onLoadTemplate) {
+  private getOnLoadNode(): Node {
+    if (!this.onLoadNode) {
       throw new Error("JsxteWebFrame: .on-load-template element is missing.");
     }
-    return this.onLoadTemplate;
+    return this.onLoadNode;
   }
 
   private getOnErrorTemplate(): HTMLTemplateElement {
@@ -140,7 +151,14 @@ class JsxteWebFrame extends HTMLDivElement {
 
   // #region Rendering Methods
 
+  private hideLoader() {
+    const loader = this.getOnLoadNode();
+    this.loaderContainer.prepend(loader);
+  }
+
   private setContent(html: string) {
+    this.hideLoader();
+
     const container = this.getContentContainer();
 
     container.innerHTML = html;
@@ -158,7 +176,9 @@ class JsxteWebFrame extends HTMLDivElement {
   }
 
   private renderLoader() {
-    this.setContent(this.getOnLoadTemplate().innerHTML);
+    const container = this.getContentContainer();
+    container.innerHTML = "";
+    container.append(this.getOnLoadNode());
   }
 
   private renderError() {
@@ -223,6 +243,7 @@ class JsxteWebFrame extends HTMLDivElement {
 
   protected connectedCallback() {
     this.style.display = "contents";
+    this.prepend(this.loaderContainer);
 
     if (this.frameName) {
       const removeNavListener = NavigationEventEmitter.on(

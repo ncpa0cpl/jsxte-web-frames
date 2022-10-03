@@ -89,12 +89,12 @@ export const WebFrame = (
   return (
     <div {...forwardedProps} is="jsxte-web-frame" {...frameProps}>
       <template class="on-load-template">
-        <div class="web-frame-loader">
+        <div style="display: contents;" class="web-frame-loader">
           {props.onLoad ? props.onLoad() : <h3>Loading...</h3>}
         </div>
       </template>
       <template class="on-error-template">
-        <div class="web-frame-error">
+        <div style="display: contents;" class="web-frame-error">
           {props.onError ? (
             props.onError(renderReloadButton)
           ) : (
