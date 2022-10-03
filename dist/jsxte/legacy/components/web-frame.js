@@ -110,6 +110,7 @@ var WebFrame = (props, context) => {
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("template", {
         class: "on-load-template",
         children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+          style: "display: contents;",
           class: "web-frame-loader",
           children: props.onLoad ? props.onLoad() : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
             children: "Loading..."
@@ -119,6 +120,7 @@ var WebFrame = (props, context) => {
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("template", {
         class: "on-error-template",
         children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+          style: "display: contents;",
           class: "web-frame-error",
           children: props.onError ? props.onError(renderReloadButton) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
             children: "Something went wrong."
