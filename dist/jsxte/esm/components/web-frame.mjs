@@ -29,26 +29,6 @@ var __objRest = (source, exclude) => {
     }
   return target;
 };
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/jsxte/components/web-frame.tsx
 import "jsxte";
@@ -56,7 +36,7 @@ import { QueryParamsContext } from "../contexts/query-params-context.mjs";
 import { WebFrameContext } from "../contexts/web-frame-context.mjs";
 import { resolveFrameView } from "../register-frame-view.mjs";
 import { jsx, jsxs } from "jsxte/jsx-runtime";
-var WebFrame = (props, context) => __async(void 0, null, function* () {
+var WebFrame = (props, context) => {
   var _a, _b, _c, _d;
   const stack = context.has(WebFrameContext) ? context.get(WebFrameContext).stack : [];
   let content = props.children;
@@ -130,7 +110,7 @@ var WebFrame = (props, context) => __async(void 0, null, function* () {
       })
     ]
   }));
-});
+};
 export {
   WebFrame
 };

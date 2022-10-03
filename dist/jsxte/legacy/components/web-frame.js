@@ -45,26 +45,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/jsxte/components/web-frame.tsx
 var web_frame_exports = {};
@@ -77,7 +57,7 @@ var import_query_params_context = require("../contexts/query-params-context.js")
 var import_web_frame_context = require("../contexts/web-frame-context.js");
 var import_register_frame_view = require("../register-frame-view.js");
 var import_jsx_runtime = require("jsxte/jsx-runtime");
-var WebFrame = (props, context) => __async(void 0, null, function* () {
+var WebFrame = (props, context) => {
   var _a, _b, _c, _d;
   const stack = context.has(import_web_frame_context.WebFrameContext) ? context.get(import_web_frame_context.WebFrameContext).stack : [];
   let content = props.children;
@@ -151,4 +131,4 @@ var WebFrame = (props, context) => __async(void 0, null, function* () {
       })
     ]
   }));
-});
+};
