@@ -10,4 +10,5 @@ export type WebFrameAttributes = {
   "data-allowed-domains"?: string;
   "data-persistent-state"?: "true" | "false";
   "data-is-preloaded"?: "true" | "false";
+  "data-min-load-time"?: `${number}`;
 };

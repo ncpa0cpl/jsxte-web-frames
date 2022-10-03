@@ -1,6 +1,7 @@
 import type { WebFrameAttributes } from "../../shared/web-component-attribute-types";
 import { NavigationEventEmitter } from "../navigation-event-emitter/navigation-event-emitter";
 import { QueryController } from "../query-controller/query-controller";
+import { withMinLoadTime } from "../utils/with-min-load-time";
 import type { FrameLink } from "./frame-link";
 
 class JsxteWebFrame extends HTMLDivElement {
@@ -122,6 +123,12 @@ class JsxteWebFrame extends HTMLDivElement {
     return attribute !== undefined ? Boolean(attribute) : undefined;
   }
 
+  get minLoadTime(): number | undefined {
+    const t = this.retrieveCustomAttribute("data-min-load-time");
+    if (t) return Number(t);
+    return undefined;
+  }
+
   // #endregion
 
   // #region HTML Element Getters
@@ -203,7 +210,10 @@ class JsxteWebFrame extends HTMLDivElement {
     if (lastUrl) {
       this.renderLoader();
       try {
-        const response = await fetch(lastUrl, { method: "GET" });
+        const response = await withMinLoadTime(
+          () => fetch(lastUrl, { method: "GET" }),
+          this.minLoadTime
+        );
         const responseData = await response.text();
 
         if (response.ok) this.setContent(responseData);
@@ -227,7 +237,10 @@ class JsxteWebFrame extends HTMLDivElement {
 
     this.renderLoader();
     try {
-      const response = await fetch(url, { method: "GET" });
+      const response = await withMinLoadTime(
+        () => fetch(url, { method: "GET" }),
+        this.minLoadTime
+      );
       const responseData = await response.text();
 
       if (response.ok) this.setContent(responseData);

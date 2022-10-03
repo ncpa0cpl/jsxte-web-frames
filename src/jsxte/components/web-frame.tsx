@@ -4,6 +4,7 @@ import type { WebFrameAttributes } from "../../shared/web-component-attribute-ty
 import { QueryParamsContext } from "../contexts/query-params-context";
 import { WebFrameContext } from "../contexts/web-frame-context";
 import { resolveFrameView } from "../register-frame-view";
+import { numToStr } from "../utils/num-to-str";
 
 declare global {
   namespace JSXTE {
@@ -22,6 +23,7 @@ export type WebFrameProps = JSXTE.PropsWithChildren<{
   children?: JSXTE.ElementChildren;
   containerProps?: JSX.IntrinsicElements["div"];
   dontPreload?: boolean;
+  minimumLoadTime?: number;
   onLoad?: () => JSX.Element;
   onError?: (
     reloadButton: JSXTE.Component<JSX.IntrinsicElements["button"]>
@@ -78,6 +80,9 @@ export const WebFrame = (
     "data-allowed-domains": props.allowedDomains?.join(";"),
     "data-persistent-state": props.persistentState ?? true ? "true" : "false",
     "data-is-preloaded": content ? "true" : "false",
+    "data-min-load-time": props.minimumLoadTime
+      ? numToStr(props.minimumLoadTime)
+      : undefined,
   };
 
   const { is, children, ...forwardedProps } = props.containerProps ?? {};
