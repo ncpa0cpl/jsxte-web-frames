@@ -64,6 +64,8 @@ module.exports = __toCommonJS(register_frame_view_exports);
 var import_jsxte = require("jsxte");
 var import_jsxte2 = require("jsxte");
 var import_query_params_provider = require("./components/query-params-provider.js");
+var import_request_response_consumer = require("./components/request-response-consumer.js");
+var import_request_response_provider = require("./components/request-response-provider.js");
 var import_jsx_runtime = require("jsxte/jsx-runtime");
 var PatternParameter = class {
   constructor(name, pattern) {
@@ -128,22 +130,34 @@ var FrameViewRoutes = class {
 FrameViewRoutes.routes = [];
 var registerFrameView = (server, path, FrameView) => {
   server.get(path, (req, res) => __async(void 0, null, function* () {
-    const queryParams = {};
-    for (const [key, value] of Object.entries(req.query)) {
-      if (Array.isArray(value) && !value.some((v) => typeof v !== "string")) {
-        queryParams[key] = value;
-      } else if (typeof value === "string") {
-        queryParams[key] = [value];
+    try {
+      const queryParams = {};
+      for (const [key, value] of Object.entries(req.query)) {
+        if (Array.isArray(value) && !value.some((v) => typeof v !== "string")) {
+          queryParams[key] = value;
+        } else if (typeof value === "string") {
+          queryParams[key] = [value];
+        }
       }
+      res.send(
+        yield (0, import_jsxte2.renderToHtmlAsync)(
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_request_response_provider.RequestResponseProvider, {
+            req,
+            res,
+            children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_query_params_provider.QueryParamsProvider, {
+              params: queryParams,
+              children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FrameView, {
+                req,
+                res
+              })
+            })
+          })
+        )
+      );
+    } catch (e) {
+      console.error(e);
+      res.status(500).send("Internal server error.");
     }
-    res.send(
-      yield (0, import_jsxte2.renderToHtmlAsync)(
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_query_params_provider.QueryParamsProvider, {
-          params: queryParams,
-          children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FrameView, {})
-        })
-      )
-    );
   }));
   FrameViewRoutes.addRoute(path, FrameView);
 };
@@ -153,6 +167,11 @@ var resolveFrameView = (url) => {
     return;
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_query_params_provider.QueryParamsProvider, {
     params: Object.fromEntries(resolvedRoute.query.entries()),
-    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(resolvedRoute.Component, {})
+    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_request_response_consumer.RequestResponseConsumer, {
+      render: ({ req, res }) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(resolvedRoute.Component, {
+        req,
+        res
+      })
+    })
   });
 };
