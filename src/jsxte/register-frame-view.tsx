@@ -21,6 +21,7 @@ class PatternParameter {
 }
 
 class Route {
+  // @ts-ignore
   private pathPattern: string;
   private patternParts: Array<string | PatternParameter>;
 
