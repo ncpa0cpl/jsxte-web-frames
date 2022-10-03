@@ -143,6 +143,21 @@ var FrameLink = class extends HTMLAnchorElement {
 };
 customElements.define("frame-link", FrameLink, { extends: "a" });
 
+// src/web-components/utils/sleep.ts
+var sleep = (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
+
+// src/web-components/utils/with-min-load-time.ts
+var withMinLoadTime = (task, minLoadTime) => __async(void 0, null, function* () {
+  if (!minLoadTime) {
+    return yield task();
+  }
+  const taskResult = task();
+  yield Promise.allSettled([taskResult, sleep(minLoadTime)]);
+  return yield taskResult;
+});
+
 // src/web-components/components/jsxte-web-frame.ts
 var JsxteWebFrame = class extends HTMLDivElement {
   constructor() {
@@ -231,6 +246,12 @@ var JsxteWebFrame = class extends HTMLDivElement {
     const attribute = this.retrieveCustomAttribute("data-is-preloaded");
     return attribute !== void 0 ? Boolean(attribute) : void 0;
   }
+  get minLoadTime() {
+    const t = this.retrieveCustomAttribute("data-min-load-time");
+    if (t)
+      return Number(t);
+    return void 0;
+  }
   getOnLoadNode() {
     if (!this.onLoadNode) {
       throw new Error("JsxteWebFrame: .on-load-template element is missing.");
@@ -288,7 +309,10 @@ var JsxteWebFrame = class extends HTMLDivElement {
       if (lastUrl) {
         this.renderLoader();
         try {
-          const response = yield fetch(lastUrl, { method: "GET" });
+          const response = yield withMinLoadTime(
+            () => fetch(lastUrl, { method: "GET" }),
+            this.minLoadTime
+          );
           const responseData = yield response.text();
           if (response.ok)
             this.setContent(responseData);
@@ -310,7 +334,10 @@ var JsxteWebFrame = class extends HTMLDivElement {
       this.history.push(url);
       this.renderLoader();
       try {
-        const response = yield fetch(url, { method: "GET" });
+        const response = yield withMinLoadTime(
+          () => fetch(url, { method: "GET" }),
+          this.minLoadTime
+        );
         const responseData = yield response.text();
         if (response.ok)
           this.setContent(responseData);

@@ -35,6 +35,7 @@ import "jsxte";
 import { QueryParamsContext } from "../contexts/query-params-context.mjs";
 import { WebFrameContext } from "../contexts/web-frame-context.mjs";
 import { resolveFrameView } from "../register-frame-view.mjs";
+import { numToStr } from "../utils/num-to-str.mjs";
 import { jsx, jsxs } from "jsxte/jsx-runtime";
 var WebFrame = (props, context) => {
   var _a, _b, _c, _d;
@@ -74,7 +75,8 @@ var WebFrame = (props, context) => {
     "data-allow-external-domains": props.allowExternalDomains ? "true" : "false",
     "data-allowed-domains": (_b = props.allowedDomains) == null ? void 0 : _b.join(";"),
     "data-persistent-state": ((_c = props.persistentState) != null ? _c : true) ? "true" : "false",
-    "data-is-preloaded": content ? "true" : "false"
+    "data-is-preloaded": content ? "true" : "false",
+    "data-min-load-time": props.minimumLoadTime ? numToStr(props.minimumLoadTime) : void 0
   };
   const _e = (_d = props.containerProps) != null ? _d : {}, { is, children } = _e, forwardedProps = __objRest(_e, ["is", "children"]);
   const renderReloadButton = (props2) => {
