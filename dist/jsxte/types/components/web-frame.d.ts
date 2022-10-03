@@ -16,6 +16,7 @@ export declare type WebFrameProps = JSXTE.PropsWithChildren<{
     children?: JSXTE.ElementChildren;
     containerProps?: JSX.IntrinsicElements["div"];
     dontPreload?: boolean;
+    minimumLoadTime?: number;
     onLoad?: () => JSX.Element;
     onError?: (reloadButton: JSXTE.Component<JSX.IntrinsicElements["button"]>) => JSX.Element;
 }>;
