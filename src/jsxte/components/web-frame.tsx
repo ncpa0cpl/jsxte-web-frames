@@ -28,10 +28,10 @@ export type WebFrameProps = JSXTE.PropsWithChildren<{
   ) => JSX.Element;
 }>;
 
-export const WebFrame = async (
+export const WebFrame = (
   props: WebFrameProps,
   context: ContextMap
-): Promise<JSX.Element> => {
+): JSX.Element => {
   const stack = context.has(WebFrameContext)
     ? context.get(WebFrameContext).stack
     : [];
