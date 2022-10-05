@@ -1,7 +1,7 @@
 import type { WebFrameAttributes } from "../../shared/web-component-attribute-types";
 import { NavigationEventEmitter } from "../navigation-event-emitter/navigation-event-emitter";
 import { QueryController } from "../query-controller/query-controller";
-import { withMinLoadTime } from "../utils/with-min-load-time";
+import { FetchCancelledError, FetchJob } from "../utils/fetch-job";
 import type { FrameLink } from "./frame-link";
 
 class JsxteWebFrame extends HTMLDivElement {
@@ -11,6 +11,7 @@ class JsxteWebFrame extends HTMLDivElement {
   private onErrorTemplate: HTMLTemplateElement | null;
   private contentContainer: HTMLDivElement | null;
   private loaderContainer: HTMLElement;
+  private lastRequest: FetchJob | undefined = undefined;
 
   constructor() {
     super();
@@ -210,15 +211,20 @@ class JsxteWebFrame extends HTMLDivElement {
     if (lastUrl) {
       this.renderLoader();
       try {
-        const response = await withMinLoadTime(
-          () => fetch(lastUrl, { method: "GET" }),
-          this.minLoadTime
-        );
-        const responseData = await response.text();
+        this.lastRequest?.cancel();
 
-        if (response.ok) this.setContent(responseData);
+        const request = (this.lastRequest = new FetchJob(
+          lastUrl,
+          { method: "GET" },
+          this.minLoadTime
+        ));
+
+        const { data, response } = await request.start();
+
+        if (response.ok) this.setContent(data);
         else this.renderError();
       } catch (e) {
+        if (e instanceof Error && FetchCancelledError.is(e)) return;
         this.renderError();
       }
     }
@@ -237,15 +243,20 @@ class JsxteWebFrame extends HTMLDivElement {
 
     this.renderLoader();
     try {
-      const response = await withMinLoadTime(
-        () => fetch(url, { method: "GET" }),
-        this.minLoadTime
-      );
-      const responseData = await response.text();
+      this.lastRequest?.cancel();
 
-      if (response.ok) this.setContent(responseData);
+      const request = (this.lastRequest = new FetchJob(
+        url,
+        { method: "GET" },
+        this.minLoadTime
+      ));
+
+      const { data, response } = await request.start();
+
+      if (response.ok) this.setContent(data);
       else this.renderError();
     } catch (e) {
+      if (e instanceof Error && FetchCancelledError.is(e)) return;
       this.renderError();
     }
   }
