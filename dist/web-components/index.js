@@ -1,3 +1,22 @@
+var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b ||= {})
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {
     var fulfilled = (value) => {
@@ -158,6 +177,75 @@ var withMinLoadTime = (task, minLoadTime) => __async(void 0, null, function* () 
   return yield taskResult;
 });
 
+// src/web-components/utils/fetch-job.ts
+var FetchCancelledError = class extends Error {
+  constructor() {
+    super(...arguments);
+    this._isCancelledError = true;
+  }
+  static is(error) {
+    return "_isCancelledError" in error;
+  }
+};
+var FetchJob = class {
+  constructor(url, options, minimumLoadTime) {
+    this.url = url;
+    this.options = options;
+    this.minimumLoadTime = minimumLoadTime;
+    this._abort = new AbortController();
+    this._isCancelled = false;
+    this._isFinished = false;
+  }
+  getResult() {
+    if (this._isCancelled) {
+      throw new FetchCancelledError("FetchJob cancelled");
+    }
+    if (!this._result) {
+      throw new Error("FetchJob not finished.");
+    }
+    if (this._result instanceof Error) {
+      throw this._result;
+    }
+    return this._result;
+  }
+  start() {
+    return __async(this, null, function* () {
+      if (!this._promise) {
+        this._promise = withMinLoadTime(
+          () => fetch(this.url, __spreadProps(__spreadValues({}, this.options), {
+            signal: this._abort.signal
+          })).then(
+            (response) => __async(this, null, function* () {
+              return {
+                data: yield response.text(),
+                response
+              };
+            })
+          ),
+          this.minimumLoadTime
+        );
+      } else {
+        throw new Error("FetchJob already started");
+      }
+      yield this._promise.then((r) => {
+        this._result = r;
+      }).catch((e) => {
+        this._result = e;
+      });
+      this._isFinished = true;
+      return this.getResult();
+    });
+  }
+  cancel() {
+    return __async(this, null, function* () {
+      if (!this._isFinished) {
+        this._isCancelled = true;
+        this._abort.abort();
+      }
+    });
+  }
+};
+
 // src/web-components/components/jsxte-web-frame.ts
 var JsxteWebFrame = class extends HTMLDivElement {
   constructor() {
@@ -165,6 +253,7 @@ var JsxteWebFrame = class extends HTMLDivElement {
     super();
     this.onFrameUnmount = void 0;
     this.history = [];
+    this.lastRequest = void 0;
     this.loaderContainer = document.createElement("div");
     this.loaderContainer.style.display = "none";
     this.onErrorTemplate = this.querySelector(
@@ -305,20 +394,25 @@ var JsxteWebFrame = class extends HTMLDivElement {
   }
   reload() {
     return __async(this, null, function* () {
+      var _a;
       const lastUrl = this.history[this.history.length - 1];
       if (lastUrl) {
         this.renderLoader();
         try {
-          const response = yield withMinLoadTime(
-            () => fetch(lastUrl, { method: "GET" }),
+          (_a = this.lastRequest) == null ? void 0 : _a.cancel();
+          const request = this.lastRequest = new FetchJob(
+            lastUrl,
+            { method: "GET" },
             this.minLoadTime
           );
-          const responseData = yield response.text();
+          const { data, response } = yield request.start();
           if (response.ok)
-            this.setContent(responseData);
+            this.setContent(data);
           else
             this.renderError();
         } catch (e) {
+          if (e instanceof Error && FetchCancelledError.is(e))
+            return;
           this.renderError();
         }
       }
@@ -326,6 +420,7 @@ var JsxteWebFrame = class extends HTMLDivElement {
   }
   load(url) {
     return __async(this, null, function* () {
+      var _a;
       this.validateUrl(url);
       const frameName = this.frameName;
       if (this.persistentState && frameName) {
@@ -334,16 +429,20 @@ var JsxteWebFrame = class extends HTMLDivElement {
       this.history.push(url);
       this.renderLoader();
       try {
-        const response = yield withMinLoadTime(
-          () => fetch(url, { method: "GET" }),
+        (_a = this.lastRequest) == null ? void 0 : _a.cancel();
+        const request = this.lastRequest = new FetchJob(
+          url,
+          { method: "GET" },
           this.minLoadTime
         );
-        const responseData = yield response.text();
+        const { data, response } = yield request.start();
         if (response.ok)
-          this.setContent(responseData);
+          this.setContent(data);
         else
           this.renderError();
       } catch (e) {
+        if (e instanceof Error && FetchCancelledError.is(e))
+          return;
         this.renderError();
       }
     });
