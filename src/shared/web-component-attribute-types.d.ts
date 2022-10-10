@@ -1,6 +1,7 @@
 export type FrameLinkAttributes = {
   "data-frame"?: string;
   "data-href": string;
+  "data-location-hash"?: string;
 };
 
 export type WebFrameAttributes = {

@@ -38,6 +38,8 @@ export class FrameLink extends HTMLAnchorElement {
       href.searchParams.delete(keyedName);
       href.searchParams.set(keyedName, frameHref);
 
+      href.hash = this.locationHash ?? "";
+
       this.href = href.toString();
     }
   }
@@ -53,6 +55,11 @@ export class FrameLink extends HTMLAnchorElement {
   get frameHref() {
     return this.retrieveCustomAttribute("data-href");
   }
+
+  get locationHash() {
+    return this.retrieveCustomAttribute("data-location-hash");
+  }
+
   // #endregion
 
   // #region Click Handler

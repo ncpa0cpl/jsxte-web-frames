@@ -5,6 +5,7 @@ import { WebFrameContext } from "../contexts/web-frame-context";
 export type LinkProps = {
   href: string;
   frameName?: string;
+  locationHash?: string;
 } & HTMLProps<AnchorTagProps>;
 
 export const Link = (props: LinkProps, context: ContextMap): JSX.Element => {
@@ -14,6 +15,7 @@ export const Link = (props: LinkProps, context: ContextMap): JSX.Element => {
   const params = new URLSearchParams();
 
   linkProps["data-href"] = href;
+  linkProps["data-location-hash"] = props.locationHash;
 
   if (context.has(WebFrameContext)) {
     const frameStack = context.get(WebFrameContext).stack;

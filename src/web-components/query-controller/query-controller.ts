@@ -9,6 +9,7 @@ export class QueryController {
     const url = new URL(window.location.href);
     url.searchParams.set(this.generateKeyedNameFor(name), value);
     window.history.pushState({}, "", url.href);
+    window.location.hash = url.hash;
     NavigationEventEmitter.emit("has-navigated", null);
   }
 
@@ -21,6 +22,7 @@ export class QueryController {
     const url = new URL(window.location.href);
     url.searchParams.delete(this.generateKeyedNameFor(name));
     window.history.replaceState({}, "", url.href);
+    window.location.hash = url.hash;
   }
 
   static getAllKeyed() {
