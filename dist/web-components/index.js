@@ -70,6 +70,7 @@ var QueryController = class {
     const url = new URL(window.location.href);
     url.searchParams.set(this.generateKeyedNameFor(name), value);
     window.history.pushState({}, "", url.href);
+    window.location.hash = url.hash;
     NavigationEventEmitter.emit("has-navigated", null);
   }
   static get(name) {
@@ -80,6 +81,7 @@ var QueryController = class {
     const url = new URL(window.location.href);
     url.searchParams.delete(this.generateKeyedNameFor(name));
     window.history.replaceState({}, "", url.href);
+    window.location.hash = url.hash;
   }
   static getAllKeyed() {
     const url = new URL(window.location.href);
@@ -114,6 +116,7 @@ var FrameLink = class extends HTMLAnchorElement {
     this.setAttribute(name, value);
   }
   updateOwnHref() {
+    var _a;
     const frameName = this.frameName;
     const frameHref = this.frameHref;
     if (frameName && frameHref) {
@@ -127,6 +130,7 @@ var FrameLink = class extends HTMLAnchorElement {
       }
       href.searchParams.delete(keyedName);
       href.searchParams.set(keyedName, frameHref);
+      href.hash = (_a = this.locationHash) != null ? _a : "";
       this.href = href.toString();
     }
   }
@@ -135,6 +139,9 @@ var FrameLink = class extends HTMLAnchorElement {
   }
   get frameHref() {
     return this.retrieveCustomAttribute("data-href");
+  }
+  get locationHash() {
+    return this.retrieveCustomAttribute("data-location-hash");
   }
   proposeOwner(frame) {
     if (!this.frameName) {
