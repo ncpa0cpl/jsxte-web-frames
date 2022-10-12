@@ -56,6 +56,7 @@ var Link = (props, context) => {
   const linkProps = {};
   const params = new URLSearchParams();
   linkProps["data-href"] = href;
+  linkProps["data-location-hash"] = props.locationHash;
   if (context.has(import_web_frame_context.WebFrameContext)) {
     const frameStack = context.get(import_web_frame_context.WebFrameContext).stack;
     for (const frame of frameStack) {
