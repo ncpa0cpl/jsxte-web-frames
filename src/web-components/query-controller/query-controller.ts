@@ -6,10 +6,12 @@ export class QueryController {
   }
 
   static set(name: string, value: string) {
+    const [params, hash] = value.split("#") as [string] & string[];
+
     const url = new URL(window.location.href);
-    url.searchParams.set(this.generateKeyedNameFor(name), value);
+    url.searchParams.set(this.generateKeyedNameFor(name), params);
     window.history.pushState({}, "", url.href);
-    window.location.hash = url.hash;
+    window.location.hash = hash ? `#${hash}` : "";
     NavigationEventEmitter.emit("has-navigated", null);
   }
 
@@ -22,7 +24,6 @@ export class QueryController {
     const url = new URL(window.location.href);
     url.searchParams.delete(this.generateKeyedNameFor(name));
     window.history.replaceState({}, "", url.href);
-    window.location.hash = url.hash;
   }
 
   static getAllKeyed() {

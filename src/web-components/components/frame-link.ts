@@ -66,7 +66,12 @@ export class FrameLink extends HTMLAnchorElement {
 
   private handleClick = (event: MouseEvent) => {
     const frameName = this.frameName;
-    const url = this.frameHref;
+    const hash = this.locationHash;
+    let url = this.frameHref;
+
+    if (hash) {
+      url += `#${hash}`;
+    }
 
     if (frameName && url) {
       event.preventDefault();
