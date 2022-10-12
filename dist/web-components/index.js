@@ -67,10 +67,11 @@ var QueryController = class {
     return `wf-${name}`;
   }
   static set(name, value) {
+    const [params, hash] = value.split("#");
     const url = new URL(window.location.href);
-    url.searchParams.set(this.generateKeyedNameFor(name), value);
+    url.searchParams.set(this.generateKeyedNameFor(name), params);
     window.history.pushState({}, "", url.href);
-    window.location.hash = url.hash;
+    window.location.hash = hash ? `#${hash}` : "";
     NavigationEventEmitter.emit("has-navigated", null);
   }
   static get(name) {
@@ -81,7 +82,6 @@ var QueryController = class {
     const url = new URL(window.location.href);
     url.searchParams.delete(this.generateKeyedNameFor(name));
     window.history.replaceState({}, "", url.href);
-    window.location.hash = url.hash;
   }
   static getAllKeyed() {
     const url = new URL(window.location.href);
@@ -102,7 +102,11 @@ var FrameLink = class extends HTMLAnchorElement {
     this.onLinkUnmount = void 0;
     this.handleClick = (event) => {
       const frameName = this.frameName;
-      const url = this.frameHref;
+      const hash = this.locationHash;
+      let url = this.frameHref;
+      if (hash) {
+        url += `#${hash}`;
+      }
       if (frameName && url) {
         event.preventDefault();
         NavigationEventEmitter.emit("navigate", { frame: frameName, url });
